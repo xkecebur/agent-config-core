@@ -10,9 +10,10 @@ CI/CD, application security, and detection.
 
 Most agent-configuration repos are a pile of instructions for one tool. This one separates
 *what you know* from *how a particular agent loads it*, so the same modules run on Claude
-Code, Cursor, GitHub Copilot, Windsurf, and opencode — and adding a sixth target means
-writing one adapter function, not rewriting the content. The constitution is also emitted
-as `AGENTS.md`, which many other agents read with no adapter at all.
+Code, Cursor, GitHub Copilot, Windsurf, opencode, and every client implementing the
+[Agent Skills](https://agentskills.io) standard — and adding another target means writing
+one adapter function, not rewriting the content. The constitution is also emitted as
+`AGENTS.md`, which many other agents read with no adapter at all.
 
 **Not** a general-purpose prompt collection. There is nothing here about frontend, mobile,
 data science, or writing marketing copy.
@@ -154,6 +155,7 @@ assumed:
 | GitHub Copilot | `.github/instructions/*.instructions.md` | `applyTo` path scope | git-level only | Generated, not yet verified in-editor |
 | Windsurf | `.windsurf/rules/*.md` | trigger mode | git-level only | Generated, not yet verified in-editor |
 | opencode | `.opencode/agents/*.md` + `AGENTS.md` | subagent description match | git-level only | Generated, not yet verified in-editor |
+| **Agent Skills standard** | `.agents/skills/<name>/SKILL.md` + `AGENTS.md` | progressive disclosure on description | git-level only | Generated, not yet verified in a client |
 
 Only Claude Code supports agent-native hooks today. For every other agent, install
 `hooks/git/pre-commit` — it runs at the git layer and therefore works everywhere.
@@ -166,19 +168,35 @@ Subagents are opencode's only description-selected mechanism. The trade-off is t
 subagent answers from its own context rather than adding knowledge to the conversation
 you are in.
 
+The `agent-skills` row is worth reading twice: it is one adapter, but it is not one tool.
+[Agent Skills](https://agentskills.io/specification) is an open specification — originally
+built by Anthropic, released as a standard in December 2025 — and its client list runs to
+several dozen products, including Codex, Gemini CLI, VS Code, Junie, Amp, goose, Roo Code,
+and Zed. Each of those would otherwise have needed its own adapter.
+
+It works the same way a Claude Code skill does, which is why the module content needed no
+reshaping: clients read only `name` and `description` at startup, then load the body when
+a task matches. The specification defines what lives inside a skill directory, not where
+those directories go; `.agents/skills/` is the path clients scan for cross-client sharing.
+
+Note that Cursor, GitHub Copilot, and opencode appear on that client list too. They keep
+their own adapters here because their native mechanisms — glob auto-attach, `applyTo` path
+scoping, subagent dispatch — are not the same as description matching, and which one
+serves a given module better has not been tested. Use whichever you prefer.
+
 ### AGENTS.md — constitution only
 
 `AGENTS.md` has become a cross-tool convention, and the constitution is emitted in that
-format. Any agent reading it gets the cross-domain rules — response shape, severity scale,
-verification discipline, destructive-action policy — with **no adapter and no install
-step**, just the file at your repo root.
+format by four of the six adapters. Any agent reading it gets the cross-domain rules —
+response shape, severity scale, verification discipline, destructive-action policy — with
+**no adapter and no install step**, just the file at your repo root.
 
-Per [agents.md](https://agents.md), that includes Codex, Gemini CLI, Aider, Zed, Warp,
-VS Code, Devin, Junie, Amp, Jules, goose, RooCode, Kilo Code, Factory, Semgrep, and others
-— alongside Cursor, Windsurf, and opencode, which have full adapters above.
+Per [agents.md](https://agents.md), that includes Aider, Warp, Devin, Jules, Kilo Code,
+Factory, Semgrep, and others that have no Agent Skills support today, so the constitution
+is all they can take. Modules need a selection mechanism, and those tools do not expose one
+that maps onto per-artifact loading.
 
-That list is the ecosystem's claim, not ours: it has not been tested here, and it covers
-the constitution only. Modules still need an adapter to load selectively on those tools.
+That list is the ecosystem's claim, not ours: it has not been tested here.
 
 If you verify an adapter against a real editor, a PR correcting these tables is the single
 most useful contribution.

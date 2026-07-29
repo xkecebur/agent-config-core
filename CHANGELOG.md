@@ -13,10 +13,17 @@ First public release. Extracted from a working single-agent setup and generalise
 - Language modules: `java-backend`, `go-backend`, `node-backend`, `python-backend`, `php-backend`
 - Cross-cutting modules: `backend-patterns`, `db-operations`, `pg-review`, `iac-review`,
   `devops-pipeline`, `security-audit`, `blue-team-detection`, `pr-review`, `lsp-tooling`
-- Adapters for Claude Code, Cursor, GitHub Copilot, Windsurf, and opencode
-  (`scripts/render.py`). opencode modules render as `.opencode/agents/*.md` subagents
-  rather than `opencode.json` `instructions` globs, which would load every module on
-  every request
+- Adapters for Claude Code, Cursor, GitHub Copilot, Windsurf, opencode, and the
+  cross-client Agent Skills standard (`scripts/render.py`). opencode modules render as
+  `.opencode/agents/*.md` subagents rather than `opencode.json` `instructions` globs,
+  which would load every module on every request
+- `agent-skills` adapter emitting `.agents/skills/<name>/SKILL.md` per the
+  [Agent Skills specification](https://agentskills.io/specification). One adapter covers
+  every compliant client — Codex, Gemini CLI, VS Code, Junie, Amp, goose, Roo Code and
+  Zed among them — instead of one adapter each
+- `scripts/validate.sh` enforces the Agent Skills limits: name charset and length, and a
+  1024-character description ceiling checked against the **rendered** output, since the
+  adapter appends glob metadata to the description after the source-side check
 - Hooks: post-edit formatter, staged-secret guard, destructive-command guard, plus an
   agent-independent git `pre-commit`
 - `scripts/validate.sh` — frontmatter checks, build check, and hook behaviour tests that

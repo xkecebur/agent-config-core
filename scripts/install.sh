@@ -15,7 +15,7 @@ AGENT="${1:-}"
 TARGET="${2:-$PWD}"
 
 if [ -z "$AGENT" ]; then
-	echo "usage: scripts/install.sh <claude-code|cursor|copilot|windsurf|opencode> [target-dir]" >&2
+	echo "usage: scripts/install.sh <claude-code|cursor|copilot|windsurf|opencode|agent-skills> [target-dir]" >&2
 	exit 1
 fi
 

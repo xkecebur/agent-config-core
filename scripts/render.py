@@ -137,12 +137,52 @@ def opencode(mods, out: Path, constitution: str) -> None:
         write(out / ".opencode" / "agents" / f"{m['name']}.md", "\n".join(lines))
 
 
+def agent_skills(mods, out: Path, constitution: str) -> None:
+    """The cross-client Agent Skills standard: .agents/skills/<name>/SKILL.md.
+
+    Agent Skills is an open specification (agentskills.io) implemented by a large number
+    of clients, so this single adapter covers tools that would otherwise need one adapter
+    each - Codex, Gemini CLI, VS Code, Junie, Amp, goose, Roo Code and Zed among them.
+
+    Selection works by progressive disclosure: clients load only name and description at
+    startup, then read the body when a task matches the description. That is the same
+    mechanism Claude Code skills use, which is why the module content needs no reshaping.
+
+    The spec defines what goes inside a skill directory, not where those directories live.
+    `.agents/skills/` is the convention clients scan for cross-client sharing, so that is
+    what we emit; each client also scans its own native directory.
+
+    Only `name` and `description` are emitted. The spec allows an arbitrary `metadata`
+    map, but no client acts on a glob key there, so writing one would cost bytes and
+    promise behaviour that does not exist. Globs are folded into the description instead -
+    the description is the only field selection reads.
+    """
+    write(out / "AGENTS.md", constitution)
+    for m in mods:
+        description = m["description"]
+        if m["globs"]:
+            description += " Applies to: " + ", ".join(m["globs"]) + "."
+        lines = [
+            "---",
+            f"name: {m['name']}",
+            f"description: {description}",
+            "---",
+            "",
+            m["body"],
+        ]
+        write(
+            out / ".agents" / "skills" / m["name"] / "SKILL.md",
+            "\n".join(lines),
+        )
+
+
 ADAPTERS = {
     "claude-code": claude_code,
     "cursor": cursor,
     "copilot": copilot,
     "windsurf": windsurf,
     "opencode": opencode,
+    "agent-skills": agent_skills,
 }
 
 
