@@ -52,8 +52,10 @@ Guidelines:
 ## How to submit a change
 
 ```bash
-# 1. Fork, then clone your fork
-git clone https://github.com/<your-account>/agent-config-core
+# 1. Fork, then clone your fork - <your-username> is your own GitHub account,
+#    not xkecebur. Add the upstream remote so you can rebase on master later:
+#      git remote add upstream https://github.com/xkecebur/agent-config-core
+git clone https://github.com/<your-username>/agent-config-core
 cd agent-config-core
 
 # 2. Branch. Any descriptive name; these prefixes are conventional here:

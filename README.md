@@ -104,7 +104,7 @@ pipe the staged diff into `gitleaks stdin` instead. Test your guards with a real
 ## Usage
 
 ```bash
-git clone https://github.com/<your-account>/agent-config-core
+git clone https://github.com/xkecebur/agent-config-core
 cd agent-config-core
 
 ./scripts/build.sh                       # generate for every agent
