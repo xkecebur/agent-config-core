@@ -1,0 +1,15 @@
+# Keeps pinned GitHub Actions SHAs current.
+#
+# The devops-pipeline module says to pin actions to a full commit SHA rather than a mutable
+# tag. Pinning without updates goes stale, so Dependabot opens a PR when a pinned action
+# publishes a new release - keeping the security property without the maintenance burden.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    labels:
+      - dependencies
