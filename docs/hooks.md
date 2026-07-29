@@ -15,14 +15,31 @@ fourth runs at the git layer and therefore works with any assistant, or none.
 
 ## Requirements
 
+`jq` and `gitleaks` are required; formatters and linters are optional. The formatter hook
+is **self-detecting** — tools that are not installed are skipped silently, so the same
+script works on a bare machine and gains capability as you install more.
+
 ```bash
-brew install jq gitleaks                  # required
-brew install ruff shellcheck hadolint shfmt   # optional, unlocks more formatting/linting
+# macOS / Linuxbrew
+brew install jq gitleaks
+brew install ruff shellcheck hadolint shfmt
+
+# Debian / Ubuntu   (gitleaks: Debian 13+ / Ubuntu 24.04+)
+sudo apt install jq gitleaks shellcheck
+
+# Fedora            (note the capitalisation)
+sudo dnf install jq gitleaks ShellCheck hadolint
+
+# Arch
+sudo pacman -S jq gitleaks shellcheck shfmt ruff
 ```
 
-`jq` is required — the agent-native hooks parse their payload as JSON.
-The formatter is **self-detecting**: tools that are not installed are skipped silently, so
-the same script works on a bare machine and gains capability as you install more.
+Per-OS notes, Windows instructions, and binary fallbacks for packages that are missing on a
+given distribution are in the [Requirements section of the README](../README.md#requirements).
+
+On **Windows** these scripts need Git Bash or WSL2 — they are bash, and will not run under
+PowerShell. If your agent launches hooks through PowerShell, use the git-level `pre-commit`
+guard, which runs wherever `git commit` runs.
 
 ## Claude Code
 

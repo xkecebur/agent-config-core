@@ -176,11 +176,120 @@ experience, that is exactly the correction worth opening a PR for.
 
 ## Requirements
 
-`bash`, `python3`, `jq`. Optional, enabling more hook capability:
+**Core** — needed to build and run anything here:
+
+| Tool | Why |
+|---|---|
+| `bash` 4+ | Every script and hook |
+| `python3` 3.9+ | `scripts/render.py` (standard library only, no pip install) |
+| `jq` | Agent-native hooks parse their payload as JSON |
+| `git` | The `pre-commit` guard |
+
+**Optional** — each one unlocks more of the formatter hook. It is **self-detecting**: tools
+that are absent are skipped silently, so nothing breaks if you install none of them.
+
+| Tool | Adds |
+|---|---|
+| `gitleaks` | Secret guards (`guard-secrets.sh`, `pre-commit`) — the highest-value one |
+| `shellcheck`, `shfmt` | Shell lint and formatting |
+| `ruff` | Python lint and formatting |
+| `hadolint` | Dockerfile lint |
+| `gofmt` | Go formatting (ships with Go) |
+
+### Install
+
+**macOS / Linuxbrew**
 
 ```bash
-brew install ruff shellcheck hadolint shfmt gitleaks
+brew install jq gitleaks shellcheck shfmt ruff hadolint
 ```
+
+**Debian / Ubuntu**
+
+```bash
+sudo apt install jq shellcheck
+# gitleaks: in Debian 13+ and Ubuntu 24.04+; older releases use the binary below
+sudo apt install gitleaks
+```
+
+`shfmt`, `hadolint`, and `ruff` are not packaged for Debian/Ubuntu — see *Fallbacks* below.
+
+**Fedora / RHEL**
+
+```bash
+sudo dnf install jq ShellCheck gitleaks hadolint    # note the capitalisation of ShellCheck
+```
+
+`shfmt` and `ruff` are not in the Fedora repositories — see *Fallbacks*.
+
+**Arch**
+
+```bash
+sudo pacman -S jq shellcheck gitleaks shfmt ruff
+```
+
+`hadolint` is only in the AUR.
+
+**Nix**
+
+```bash
+nix-shell -p jq gitleaks shellcheck shfmt hadolint ruff
+```
+
+**Windows**
+
+The scripts are bash, so they need **Git Bash** (bundled with Git for Windows) or **WSL2**.
+They will not run under PowerShell or `cmd`. WSL2 is the smoother path — use the
+Debian/Ubuntu instructions inside it.
+
+For native Git Bash:
+
+```powershell
+winget install jqlang.jq Git.Git
+scoop install gitleaks shellcheck shfmt hadolint     # or: choco install ...
+pip install ruff
+```
+
+Note that the agent-native hooks assume a POSIX shell. If your agent launches hooks through
+PowerShell on Windows, use the git-level `pre-commit` guard instead — it runs wherever
+`git commit` runs.
+
+### Fallbacks when a package is missing
+
+`ruff` — always available through Python packaging, on every OS:
+
+```bash
+pipx install ruff       # or: pip install ruff / uv tool install ruff
+```
+
+`shfmt` — via Go, or a release binary:
+
+```bash
+go install mvdan.cc/sh/v3/cmd/shfmt@latest
+```
+
+`gitleaks`, `hadolint`, `shfmt` — official static binaries, no package manager needed:
+
+```bash
+# example: gitleaks on linux x64, pinned to the version CI uses
+VERSION=8.30.1
+curl -sSfL -o /tmp/gitleaks.tar.gz \
+  "https://github.com/gitleaks/gitleaks/releases/download/v${VERSION}/gitleaks_${VERSION}_linux_x64.tar.gz"
+tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+```
+
+Release pages: [gitleaks](https://github.com/gitleaks/gitleaks/releases),
+[hadolint](https://github.com/hadolint/hadolint/releases),
+[shfmt](https://github.com/mvdan/sh/releases).
+
+### Verify
+
+```bash
+./scripts/validate.sh
+```
+
+Tools you have not installed are reported as `skip`, not as failures.
 
 ---
 

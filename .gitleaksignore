@@ -1,9 +1,15 @@
 # Test fixtures, not real credentials.
 #
 # These are randomly generated tokens used to prove the secret guards actually fire.
-# They must stay detectable by gitleaks — that is the whole point of the test — so they
-# are allowlisted here by fingerprint rather than weakened until the scanner ignores them.
+# They must stay detectable by gitleaks - that is the point of the test - so they are
+# allowlisted here rather than weakened until the scanner ignores them.
 #
-# Do not add a real finding to this file. Rotate the credential instead.
+# NOTE: a gitleaks fingerprint contains the line number, so editing the surrounding
+# document invalidates the entry and CI turns red. Regenerate from an empty allowlist:
+#   : > .gitleaksignore
+#   gitleaks dir . --no-banner --redact -f json -r /tmp/gl.json
+#   jq -r '.[].Fingerprint' /tmp/gl.json >> .gitleaksignore
+#
+# Never add a real finding here. Rotate the credential instead.
+docs/hooks.md:github-pat:113
 scripts/validate.sh:github-pat:139
-docs/hooks.md:github-pat:96
