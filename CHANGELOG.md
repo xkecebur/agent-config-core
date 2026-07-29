@@ -29,6 +29,10 @@ First public release. Extracted from a working single-agent setup and generalise
   agent-independent git `pre-commit`
 - `scripts/validate.sh` — frontmatter checks, build check, and hook behaviour tests that
   use real triggers
+- `scripts/validate.sh` also covers the install path: every committed script carrying a
+  shebang must be mode `100755` **in the index**, and `install.sh` must copy an adapter
+  into a clean target in full. Both are invisible in a working tree that already has the
+  bits set locally, which is how the mode bug above survived
 - CI running shellcheck, shfmt, ruff, validation, and a secret scan
 - Constitution gains **Robust** and **Maintainable** rules under coding standards —
   timeouts, resource cleanup on error paths, idempotent retries, honest names,
@@ -86,6 +90,11 @@ First public release. Extracted from a working single-agent setup and generalise
   there was "nothing here about frontend"; that is no longer true, and the sentence now
   states what is still excluded — mobile, data science — and why there are no
   framework-specific frontend modules
+
+### Fixed
+- `scripts/install.sh` was committed with mode `100644`, so the command the README
+  documents failed with `permission denied` on every fresh clone. The script itself was
+  correct — only the mode in the git index was wrong
 
 ### Notes
 - Only the Claude Code adapter has been verified in a running tool. The other five are
