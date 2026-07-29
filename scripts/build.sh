@@ -20,7 +20,7 @@ command -v python3 >/dev/null 2>&1 || {
 }
 
 agents=("$@")
-[ ${#agents[@]} -eq 0 ] && agents=(claude-code cursor copilot windsurf)
+[ ${#agents[@]} -eq 0 ] && agents=(claude-code cursor copilot windsurf opencode)
 
 rm -rf "$DIST"
 

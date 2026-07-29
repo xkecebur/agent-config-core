@@ -13,7 +13,10 @@ First public release. Extracted from a working single-agent setup and generalise
 - Language modules: `java-backend`, `go-backend`, `node-backend`, `python-backend`, `php-backend`
 - Cross-cutting modules: `backend-patterns`, `db-operations`, `pg-review`, `iac-review`,
   `devops-pipeline`, `security-audit`, `blue-team-detection`, `pr-review`, `lsp-tooling`
-- Adapters for Claude Code, Cursor, GitHub Copilot, and Windsurf (`scripts/render.py`)
+- Adapters for Claude Code, Cursor, GitHub Copilot, Windsurf, and opencode
+  (`scripts/render.py`). opencode modules render as `.opencode/agents/*.md` subagents
+  rather than `opencode.json` `instructions` globs, which would load every module on
+  every request
 - Hooks: post-edit formatter, staged-secret guard, destructive-command guard, plus an
   agent-independent git `pre-commit`
 - `scripts/validate.sh` — frontmatter checks, build check, and hook behaviour tests that

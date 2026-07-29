@@ -7,8 +7,8 @@ declined, and exactly how to get a change merged.
 
 Ranked, honestly:
 
-1. **Verifying an adapter.** The README support matrix marks Cursor, Copilot, and Windsurf
-   as generated-but-unverified. Running one in a real editor and reporting what happened —
+1. **Verifying an adapter.** The README support matrix marks Cursor, Copilot, Windsurf, and
+   opencode as generated-but-unverified. Running one in a real tool and reporting what happened —
    even "it worked exactly as described" — is the single most valuable contribution. Use the
    *Adapter verification report* issue template.
 2. **A new adapter.** One function in `scripts/render.py`, registered in `ADAPTERS`. The

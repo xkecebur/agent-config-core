@@ -1,10 +1,15 @@
 # Generated output — rebuild with scripts/build.sh
 dist/
 
+# Byte cache — validate.sh imports render.py to read its adapter list
+__pycache__/
+*.pyc
+
 # Local agent state, never share
 .claude/settings.local.json
 .cursor/
 .windsurf/
+.opencode/
 
 # OS noise
 .DS_Store

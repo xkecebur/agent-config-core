@@ -73,7 +73,7 @@ Copy the scripts somewhere stable and reference them by absolute path in
 Merge into the existing `hooks` object rather than replacing it. Malformed JSON disables
 every setting in the file silently.
 
-## Cursor, Copilot, Windsurf, and everything else
+## Cursor, Copilot, Windsurf, opencode, and everything else
 
 These agents have no equivalent of a pre-command hook today. Use the git-layer guard, which
 covers the case that matters most — a secret reaching history:

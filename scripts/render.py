@@ -106,11 +106,43 @@ def windsurf(mods, out: Path, constitution: str) -> None:
         write(out / ".windsurf" / "rules" / f"{m['name']}.md", "\n".join(lines))
 
 
+def opencode(mods, out: Path, constitution: str) -> None:
+    """AGENTS.md constitution plus on-demand subagents in .opencode/agents/.
+
+    opencode.json has an `instructions` field that accepts globs, which looks like the
+    obvious home for modules. It is the wrong one: those files are loaded as instructions,
+    so all 14 modules would be resident on every request - the exact cost this repository
+    exists to avoid. Subagents are the only opencode mechanism selected per task from a
+    description, so they are the honest analogue of a Claude Code skill.
+
+    The trade-off is real and worth knowing: a subagent runs in its own context and reports
+    back, rather than injecting knowledge into the conversation you are already in.
+
+    opencode has no glob auto-attach for agents, so glob metadata is folded into the
+    description - the only field the primary agent matches against.
+    """
+    write(out / "AGENTS.md", constitution)
+    for m in mods:
+        description = m["description"]
+        if m["globs"]:
+            description += " Applies to: " + ", ".join(m["globs"]) + "."
+        lines = [
+            "---",
+            f"description: {description}",
+            "mode: subagent",
+            "---",
+            "",
+            m["body"],
+        ]
+        write(out / ".opencode" / "agents" / f"{m['name']}.md", "\n".join(lines))
+
+
 ADAPTERS = {
     "claude-code": claude_code,
     "cursor": cursor,
     "copilot": copilot,
     "windsurf": windsurf,
+    "opencode": opencode,
 }
 
 

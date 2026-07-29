@@ -10,8 +10,9 @@ CI/CD, application security, and detection.
 
 Most agent-configuration repos are a pile of instructions for one tool. This one separates
 *what you know* from *how a particular agent loads it*, so the same modules run on Claude
-Code, Cursor, GitHub Copilot, and Windsurf — and adding a fifth target means writing one
-adapter function, not rewriting the content.
+Code, Cursor, GitHub Copilot, Windsurf, and opencode — and adding a sixth target means
+writing one adapter function, not rewriting the content. The constitution is also emitted
+as `AGENTS.md`, which many other agents read with no adapter at all.
 
 **Not** a general-purpose prompt collection. There is nothing here about frontend, mobile,
 data science, or writing marketing copy.
@@ -138,19 +139,48 @@ layout, and register it in `ADAPTERS`. The module content needs no changes.
 
 ## Support status
 
-Honest matrix — "verified" means actually run, not assumed:
+Two different things are worth separating, because they carry different confidence.
 
-| Agent | Format | Modules | Hooks | Status |
+### Adapters — modules loaded selectively
+
+An adapter maps every module into that agent's own on-demand loading mechanism. This is
+where the context saving actually comes from. "Verified" means run in the real tool, not
+assumed:
+
+| Agent | Format | Selection mechanism | Hooks | Status |
 |---|---|---|---|---|
-| Claude Code | `skills/<name>/SKILL.md` + `CLAUDE.md` | Yes | Native | **Verified** |
-| Cursor | `.cursor/rules/*.mdc` | Yes | git-level only | Generated, not yet verified in-editor |
-| GitHub Copilot | `.github/instructions/*.instructions.md` | Yes | git-level only | Generated, not yet verified in-editor |
-| Windsurf | `.windsurf/rules/*.md` | Yes | git-level only | Generated, not yet verified in-editor |
+| Claude Code | `skills/<name>/SKILL.md` + `CLAUDE.md` | description match | Native | **Verified** |
+| Cursor | `.cursor/rules/*.mdc` | glob auto-attach | git-level only | Generated, not yet verified in-editor |
+| GitHub Copilot | `.github/instructions/*.instructions.md` | `applyTo` path scope | git-level only | Generated, not yet verified in-editor |
+| Windsurf | `.windsurf/rules/*.md` | trigger mode | git-level only | Generated, not yet verified in-editor |
+| opencode | `.opencode/agents/*.md` + `AGENTS.md` | subagent description match | git-level only | Generated, not yet verified in-editor |
 
 Only Claude Code supports agent-native hooks today. For every other agent, install
 `hooks/git/pre-commit` — it runs at the git layer and therefore works everywhere.
 
-If you verify an adapter against a real editor, a PR correcting this table is the single
+One adapter note worth stating, since it looks like a mistake otherwise: opencode's
+`opencode.json` has an `instructions` field that accepts globs, which seems like the
+natural home for modules. It is not — those files load as instructions, so all 14 would
+sit in context on every request, which is the exact cost this repo exists to remove.
+Subagents are opencode's only description-selected mechanism. The trade-off is that a
+subagent answers from its own context rather than adding knowledge to the conversation
+you are in.
+
+### AGENTS.md — constitution only
+
+`AGENTS.md` has become a cross-tool convention, and the constitution is emitted in that
+format. Any agent reading it gets the cross-domain rules — response shape, severity scale,
+verification discipline, destructive-action policy — with **no adapter and no install
+step**, just the file at your repo root.
+
+Per [agents.md](https://agents.md), that includes Codex, Gemini CLI, Aider, Zed, Warp,
+VS Code, Devin, Junie, Amp, Jules, goose, RooCode, Kilo Code, Factory, Semgrep, and others
+— alongside Cursor, Windsurf, and opencode, which have full adapters above.
+
+That list is the ecosystem's claim, not ours: it has not been tested here, and it covers
+the constitution only. Modules still need an adapter to load selectively on those tools.
+
+If you verify an adapter against a real editor, a PR correcting these tables is the single
 most useful contribution.
 
 ---

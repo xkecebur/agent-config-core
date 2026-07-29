@@ -75,6 +75,18 @@ if ./scripts/build.sh >/dev/null 2>&1; then
 	count=$(find dist -type f | wc -l | tr -d ' ')
 	check "$([ "$count" -gt 0 ] && echo 0 || echo 1)" \
 		"build produced $count files" "build produced nothing"
+
+	# Registering an adapter in render.py but forgetting build.sh's default list is a
+	# silent failure: the build still succeeds, that agent just never gets generated.
+	# -B: importing render.py must not litter scripts/ with a __pycache__ directory.
+	adapters=$(python3 -B -c "import sys; sys.path.insert(0, 'scripts'); import render; print(' '.join(render.ADAPTERS))")
+	for agent in $adapters; do
+		if [ -d "dist/$agent" ] && [ -n "$(find "dist/$agent" -type f -print -quit)" ]; then
+			ok "adapter $agent generated output"
+		else
+			no "adapter $agent registered but produced nothing"
+		fi
+	done
 else
 	no "build failed"
 fi
