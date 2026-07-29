@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Git pre-commit hook — agent-agnostic secret guard.
+#
+# The agent-native hooks only fire inside the agent that supports them. This one runs at
+# the git layer, so the protection holds no matter which assistant (or human) is driving.
+#
+# Install:
+#   cp hooks/git/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# Or point core.hooksPath at a shared directory:
+#   git config core.hooksPath .githooks
+
+set -uo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+	echo "pre-commit: gitleaks not installed, skipping secret scan" >&2
+	echo "            install: brew install gitleaks | https://github.com/gitleaks/gitleaks" >&2
+	exit 0
+fi
+
+# gitleaks v8.30 removed the `protect` subcommand. Scanning the staged diff through
+# stdin is the supported path; `gitleaks protect --staged` exits 0 without scanning,
+# which silently disables the guard.
+findings=$(git diff --staged | gitleaks stdin --no-banner --redact 2>&1)
+status=$?
+
+if [ $status -ne 0 ]; then
+	# Strip ANSI escapes for readable terminal output
+	printf '%s\n' "$findings" | sed $'s/\033\\[[0-9;]*m//g' >&2
+	cat >&2 <<'MSG'
+
+pre-commit: commit blocked - a probable secret is present in the staged changes.
+
+  - Remove the secret and re-stage, or
+  - Add the fingerprint to .gitleaksignore if this is a false positive, or
+  - Bypass deliberately with: git commit --no-verify   (you own the consequences)
+MSG
+	exit 1
+fi
+
+exit 0

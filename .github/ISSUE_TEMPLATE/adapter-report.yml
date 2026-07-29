@@ -1,0 +1,47 @@
+name: Adapter verification report
+description: Report how a generated adapter behaved in a real editor
+title: "[adapter] "
+labels: ["adapter", "verification"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The support matrix in the README marks Cursor, Copilot, and Windsurf as
+        generated-but-unverified. This report is the most useful contribution to the
+        project — it turns a guess into a fact.
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Agent
+      options: [Claude Code, Cursor, GitHub Copilot, Windsurf, Other]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Agent version
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Result
+      options:
+        - Modules loaded correctly
+        - Modules loaded, but auto-attach (globs) did not work
+        - Modules were not picked up at all
+        - Format rejected or errored
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: What happened
+      description: Which module, what you expected, what occurred. Paste any error output.
+    validations:
+      required: true
+  - type: textarea
+    id: fix
+    attributes:
+      label: Suggested format correction
+      description: If you know the correct frontmatter or directory layout for this agent, describe it here.

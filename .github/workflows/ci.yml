@@ -1,0 +1,64 @@
+# CI for agent-config-core.
+#
+# This workflow follows the rules the `devops-pipeline` module teaches, because a repo that
+# preaches pipeline hygiene and ignores it in its own CI is not worth reading:
+#   - permissions declared minimally at workflow level
+#   - third-party actions pinned to a full commit SHA, not a mutable tag
+#   - no untrusted ${{ }} interpolation inside run: blocks
+#   - pull_request (not pull_request_target), so fork PRs get no secrets
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          sudo install -m 0755 /tmp/gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Shell lint
+        run: shellcheck scripts/*.sh hooks/*.sh hooks/git/pre-commit
+
+      - name: Shell format check
+        run: |
+          curl -sSfL -o /tmp/shfmt \
+            "https://github.com/mvdan/sh/releases/download/v3.13.1/shfmt_v3.13.1_linux_amd64"
+          sudo install -m 0755 /tmp/shfmt /usr/local/bin/shfmt
+          shfmt -d scripts/*.sh hooks/*.sh hooks/git/pre-commit
+
+      - name: Python lint
+        run: |
+          pipx install ruff
+          ruff check scripts/
+          ruff format --check scripts/
+
+      - name: Validate modules, build, and hooks
+        run: ./scripts/validate.sh
+
+      - name: Secret scan
+        run: gitleaks dir . --no-banner --redact
+
+      - name: Confirm dist/ is not committed
+        run: |
+          if git ls-files --error-unmatch dist >/dev/null 2>&1; then
+            echo "dist/ is generated output and must not be committed" >&2
+            exit 1
+          fi

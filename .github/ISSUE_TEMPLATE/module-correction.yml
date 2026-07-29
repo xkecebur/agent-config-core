@@ -1,0 +1,27 @@
+name: Module correction
+description: A module says something wrong, outdated, or too generic
+title: "[module] "
+labels: ["module"]
+body:
+  - type: input
+    id: module
+    attributes:
+      label: Module
+      placeholder: node-backend
+    validations:
+      required: true
+  - type: textarea
+    id: claim
+    attributes:
+      label: What it currently says
+    validations:
+      required: true
+  - type: textarea
+    id: correction
+    attributes:
+      label: What it should say, and why
+      description: |
+        The bar is specificity — a module earns its context cost only if it is specific
+        enough to be wrong. Name the failure mode, and the version if it matters.
+    validations:
+      required: true

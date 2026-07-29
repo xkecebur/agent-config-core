@@ -1,0 +1,9 @@
+# Test fixtures, not real credentials.
+#
+# These are randomly generated tokens used to prove the secret guards actually fire.
+# They must stay detectable by gitleaks — that is the whole point of the test — so they
+# are allowlisted here by fingerprint rather than weakened until the scanner ignores them.
+#
+# Do not add a real finding to this file. Rotate the credential instead.
+scripts/validate.sh:github-pat:139
+docs/hooks.md:github-pat:96

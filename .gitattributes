@@ -1,0 +1,8 @@
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.py   text eol=lf
+pre-commit text eol=lf
+
+docs/*      linguist-documentation
+core/**     linguist-documentation

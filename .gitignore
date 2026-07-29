@@ -1,0 +1,10 @@
+# Generated output — rebuild with scripts/build.sh
+dist/
+
+# Local agent state, never share
+.claude/settings.local.json
+.cursor/
+.windsurf/
+
+# OS noise
+.DS_Store
