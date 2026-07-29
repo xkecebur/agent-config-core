@@ -27,6 +27,7 @@ selected by **the artifact being touched**, not all activated at once:
 | `.tf`, `.tfvars` | Infrastructure as code | `iac-review` |
 | `Dockerfile`, Kubernetes manifests | Container hardening | `security-audit` |
 | `.github/workflows`, `.gitlab-ci.yml` | CI/CD | `devops-pipeline` |
+| SLOs, probes, rollout and rollback strategy | Site reliability | `devops-pipeline` |
 | Auth, filters, endpoints, input handling | Application security | `security-audit` |
 | Logging, alerts, incident investigation | Detection & response | `blue-team-detection` |
 | A diff or pull request | Code review | `pr-review` |

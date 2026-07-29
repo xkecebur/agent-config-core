@@ -29,6 +29,9 @@ First public release. Extracted from a working single-agent setup and generalise
   metric and a trace, cardinality limits on metric labels, correlation ids born at the
   edge, clock synchronisation as a forensic requirement, and retention sized to real
   attacker dwell time
+- `devops-pipeline` gains a **Deployment and runtime health** section: liveness versus
+  readiness probes, SLOs and error budgets as a release gate, canary promotion driven by
+  an SLI rather than a timer, rehearsed rollback, and burn-rate alerting on symptoms
 
 ### Notes
 - Only the Claude Code adapter has been verified in a running tool. The other four are

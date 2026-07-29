@@ -1,6 +1,6 @@
 ---
 name: devops-pipeline
-description: CI/CD review and hardening — GitHub Actions (script injection, pull_request_target, token permissions, action pinning, OIDC vs long-lived keys), GitLab CI, secret leakage through logs and artifacts, and dependency supply chain. Use when writing or reviewing workflow files, when a build leaks a secret, or when designing a deployment pipeline.
+description: CI/CD review and hardening — GitHub Actions (script injection, pull_request_target, token permissions, action pinning, OIDC vs long-lived keys), GitLab CI, secret leakage through logs and artifacts, dependency supply chain, plus deployment and runtime health (liveness vs readiness probes, SLO and error budget, canary promotion gates, rollback, burn-rate alerting). Use when writing or reviewing workflow files, when a build leaks a secret, when designing a deployment pipeline, when setting an SLO or deciding what should page, or when a rollout needs a gate or a rollback path.
 globs:
   - ".github/workflows/**"
   - "**/.gitlab-ci.yml"
@@ -99,6 +99,50 @@ you execute.
 - [ ] Internal registries cannot be shadowed by public packages (dependency confusion) —
       scopes and namespaces claimed
 - [ ] Base images pinned by digest, not `:latest`
+
+## Deployment and runtime health
+
+A pipeline's job does not end when the artifact ships. These are the signals that decide
+whether a rollout continues or reverses.
+
+**Probes — liveness and readiness are different questions**
+
+- Liveness answers "should this process be killed and restarted". Readiness answers
+  "should traffic be routed here". Conflating them is a classic outage amplifier: a slow
+  dependency fails the check, the orchestrator restarts the pod, the restart adds load,
+  and you get a restart loop precisely when you can least afford one
+- Liveness must not check dependencies. A process with a dead database is still alive —
+  it is simply not ready
+- Slow-booting applications need a startup probe, otherwise liveness kills them mid-boot
+
+**SLO and error budget**
+
+- Measure the SLI from the user's side — request success rate, latency percentile — not
+  from host CPU. Saturation is a cause; users experience symptoms
+- An SLO is a target plus a window: 99.9% over 30 days. The error budget is the failure
+  still permitted inside that window
+- 100% is not a target. It prices out all change. The budget exists so that shipping speed
+  and reliability trade against each other explicitly instead of by argument
+- Budget exhausted → releases pause until it recovers. An error budget nobody enforces is
+  decoration
+
+**Rollout and rollback**
+
+- Progressive delivery (canary, blue-green) only helps if the promotion gate reads an SLI.
+  A gate that waits on a timer proves nothing except that time passed
+- Rollback must be rehearsed and time-bounded. "We can always roll forward" is not a plan
+  at 3am with a broken build
+- A schema change must stay backward compatible for one release, or rollback is impossible
+  even when the deployment tooling works perfectly — expand/contract, see `db-operations`
+
+**Alerting**
+
+- Page on symptoms (user-facing errors, burn rate), not on causes (CPU high). Cause alerts
+  fire without impact and train people to ignore them
+- Use multi-window burn-rate alerts: fast burn pages, slow burn opens a ticket
+- Every page must be actionable right now. If nobody would act at 3am, it is a ticket
+
+Signal design, cardinality, and correlation ids → `blue-team-detection`.
 
 ## Workflow review checklist
 
