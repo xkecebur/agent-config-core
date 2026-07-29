@@ -110,7 +110,7 @@ echo '{"tool_name":"Bash","tool_input":{"command":"terraform destroy"}}' \
 
 # Secret guard: expect "deny"
 cd "$(mktemp -d)" && git init -q . && git config user.email t@t.io && git config user.name t
-printf 'TOKEN=ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8\n' > .env && git add .env
+printf 'TOKEN=ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8\n' > .env && git add .env # gitleaks:allow
 echo '{"tool_name":"Bash","tool_input":{"command":"git commit -m x"}}' \
   | /path/to/hooks/guard-secrets.sh | jq -r '.hookSpecificOutput.permissionDecision'
 ```

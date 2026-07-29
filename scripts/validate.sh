@@ -148,7 +148,7 @@ if command -v gitleaks >/dev/null 2>&1; then
 		git commit -qm init
 	) >/dev/null 2>&1
 
-	printf 'TOKEN=ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8\n' >"$tmp/.env"
+	printf 'TOKEN=ghp_A1b2C3d4E5f6G7h8I9j0K1l2M3n4O5p6Q7r8\n' >"$tmp/.env" # gitleaks:allow
 	(cd "$tmp" && git add .env) >/dev/null 2>&1
 
 	decision=$(cd "$tmp" && echo '{"tool_name":"Bash","tool_input":{"command":"git commit -m x"}}' |
