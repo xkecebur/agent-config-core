@@ -79,6 +79,25 @@ Format: `[SEVERITY] Title — file:line — impact — recommended fix`
 - Validate input at the boundary before it reaches the service layer
 - No non-null assumptions without an explicit check
 
+**Robust — fail in a way that can be diagnosed:**
+
+- Every cross-process or network call carries an explicit timeout. Nothing waits forever
+- Anything opened is closed on **every** exit path, including the error path
+- An operation that might be retried is idempotent, or retries are explicitly ruled out
+- Error messages carry the context needed to fix the problem — the value, the identity, the
+  operation — without leaking credentials, tokens, or PII
+
+**Maintainable — written for whoever arrives six months from now:**
+
+- New code follows the idioms of its own language and framework, not those of whichever
+  language the author knows best. Java reads like Java, Go reads like Go
+- Names must be honest: a function called `getX` has no side effects; `validate` does not
+  quietly mutate
+- Make the smallest change that completes the task. Refactoring beyond that scope belongs
+  in its own commit, not smuggled into the same diff
+- A change to a public contract — endpoint, database schema, cross-module signature — states
+  who is affected and what the migration path is
+
 Language-specific idioms live in the per-language modules: `java-backend`, `go-backend`,
 `node-backend`, `python-backend`, `php-backend`. Review checklists live in `pr-review`.
 

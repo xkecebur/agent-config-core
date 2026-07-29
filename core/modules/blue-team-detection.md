@@ -1,6 +1,6 @@
 ---
 name: blue-team-detection
-description: Defensive security — detection engineering (Sigma rules, alert quality, detection-as-code), logging that is actually useful during an investigation, incident triage and timelines, and translating known attack techniques into detections. Use when designing alerts or detection rules, deciding what an application should log, investigating suspicious activity, writing an incident post-mortem, or answering "how would we detect this".
+description: Defensive security — detection engineering (Sigma rules, alert quality, detection-as-code), observability (logs, metrics and traces, correlation ids, cardinality, retention), logging that is actually useful during an investigation, incident triage and timelines, and translating known attack techniques into detections. Use when designing alerts or detection rules, deciding what an application should log or instrument, choosing between a log, a metric and a trace, investigating suspicious activity, writing an incident post-mortem, or answering "how would we detect this".
 alwaysApply: false
 ---
 
@@ -32,6 +32,42 @@ Rules:
   exposure you are defending against
 - Failed authorization events are more valuable than successful ones. Enumeration and
   broken object-level authorization show up there first
+
+## Observability — choosing the right signal
+
+A detection is only as good as the signal beneath it. The three signals answer three
+different questions, and reaching for the wrong one is most expensive during an incident:
+
+| Signal | Answers | Cost |
+|---|---|---|
+| Log | "what exactly happened on this request" | expensive per event, cheap to search if structured |
+| Metric | "how often, how bad, since when" | cheap, but bounded by cardinality |
+| Trace | "which hop lost the latency, or broke the chain" | needs sampling and context propagation |
+
+Rules:
+
+- **Never answer a metric question with logs.** Computing an error rate by grepping is slow
+  and expensive in exactly the minutes where speed decides the outcome
+- **Cardinality is a real cost.** `user_id`, `request_id`, and `resource_id` must not become
+  metric labels — one high-cardinality label can multiply your time series until the metric
+  backend falls over. Identity belongs in logs and traces; metrics hold aggregates
+- **The correlation id is born at the edge** (ingress or gateway), propagates to every hop,
+  and appears in all three signals. If it exists only in logs, traces are orphaned and
+  cross-service correlation goes back to being manual
+- **Instrument boundaries**, not every function: inbound request, outbound call, database
+  query, queue publish and consume. Beyond that, spans add noise and cost, not insight
+- **Measure the four golden signals** — latency, traffic, errors, saturation — and report
+  latency by percentile. An average hides the tail, and the tail is what users feel
+- **Sampling traces is fine; sampling audit and security logs is not.** Authentication,
+  denied authorization, and privilege changes are recorded in full, because their value
+  lies precisely in the rare event
+- **Synchronise clocks (NTP) and record every timestamp in UTC.** Drift between hosts makes
+  an incident timeline lie about cause and effect — a forensic defect, not a cosmetic one
+- **Retention must cover a realistic detection window.** Attacker dwell time is routinely
+  measured in months; seven days of logs means a serious incident cannot be reconstructed
+
+Instrumentation inherits the logging prohibitions above: no credentials, tokens, session
+ids, or raw PII — including in span attributes and in URLs captured alongside them.
 
 ## Detection engineering
 

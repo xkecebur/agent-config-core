@@ -22,9 +22,16 @@ First public release. Extracted from a working single-agent setup and generalise
 - `scripts/validate.sh` — frontmatter checks, build check, and hook behaviour tests that
   use real triggers
 - CI running shellcheck, shfmt, ruff, validation, and a secret scan
+- Constitution gains **Robust** and **Maintainable** rules under coding standards —
+  timeouts, resource cleanup on error paths, idempotent retries, honest names,
+  minimal diffs, and stated migration paths for public-contract changes
+- `blue-team-detection` gains an **Observability** section: choosing between a log, a
+  metric and a trace, cardinality limits on metric labels, correlation ids born at the
+  edge, clock synchronisation as a forensic requirement, and retention sized to real
+  attacker dwell time
 
 ### Notes
-- Only the Claude Code adapter has been verified in a running editor. The other three are
+- Only the Claude Code adapter has been verified in a running tool. The other four are
   generated but unverified — see the support matrix in the README.
 - `java-backend`, `pg-review`, `pr-review`, `security-audit`, and `lsp-tooling` come from
   daily use. The remaining modules are newer and have had less exposure.
