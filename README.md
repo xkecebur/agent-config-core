@@ -293,6 +293,16 @@ Tools you have not installed are reported as `skip`, not as failures.
 
 ---
 
+## Contributing
+
+Contributions are welcome — especially **adapter verification**, which is the one thing that
+turns a guess in the support matrix into a fact.
+
+- [CONTRIBUTING.md](CONTRIBUTING.md) — what is useful, what will be declined, PR workflow,
+  commit convention, review expectations
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — argue about the claim, not the person
+- [SECURITY.md](SECURITY.md) — report a vulnerability privately, never in a public issue
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
