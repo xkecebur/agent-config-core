@@ -7,10 +7,12 @@ declined, and exactly how to get a change merged.
 
 Ranked, honestly:
 
-1. **Verifying an adapter.** The README support matrix marks Cursor, Copilot, Windsurf, and
-   opencode as generated-but-unverified. Running one in a real tool and reporting what happened —
-   even "it worked exactly as described" — is the single most valuable contribution. Use the
-   *Adapter verification report* issue template.
+1. **Verifying an adapter.** The README support matrix marks Cursor, Copilot, Windsurf,
+   opencode, and the Agent Skills standard as generated-but-unverified. Running one in a real
+   tool and reporting what happened — even "it worked exactly as described" — is the single
+   most valuable contribution. The Agent Skills adapter is the highest-leverage one to check,
+   since dozens of clients implement that specification. Use the *Adapter verification report*
+   issue template.
 2. **A new adapter.** One function in `scripts/render.py`, registered in `ADAPTERS`. The
    module content needs no changes.
 3. **Correcting a module.** Especially in `node-backend`, `python-backend`, and

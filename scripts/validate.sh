@@ -50,14 +50,27 @@ for f in core/modules/*.md; do
 		no "$name: frontmatter name is '$declared'"
 		errors=1
 	fi
+	# Agent Skills spec: 1-64 chars, lowercase alphanumeric and hyphens, no leading or
+	# trailing hyphen, no consecutive hyphens, and must match the directory name.
+	# The agent-skills adapter emits these names verbatim, so a violation here ships a
+	# skill that compliant clients are entitled to reject.
+	if ! printf '%s' "$name" | grep -qE '^[a-z0-9]+(-[a-z0-9]+)*$'; then
+		no "$name: not a valid Agent Skills name (lowercase, digits, single hyphens)"
+		errors=1
+	elif [ "${#name}" -gt 64 ]; then
+		no "$name: name is ${#name} chars - Agent Skills allows 64"
+		errors=1
+	fi
 	if [ -z "$desc" ]; then
 		no "$name: missing description"
 		errors=1
 	elif [ "${#desc}" -lt 80 ]; then
 		no "$name: description too short to be a useful retrieval signal"
 		errors=1
-	elif [ "${#desc}" -gt 1200 ]; then
-		no "$name: description is ${#desc} chars - it costs context on every request"
+	elif [ "${#desc}" -gt 1024 ]; then
+		# 1024 is the Agent Skills hard limit, not a preference. Descriptions also cost
+		# context on every request, so shorter is better well before the ceiling.
+		no "$name: description is ${#desc} chars - Agent Skills allows 1024"
 		errors=1
 	elif ! printf '%s' "$desc" | grep -qi 'use when'; then
 		no "$name: description does not say when to load it"
@@ -87,6 +100,20 @@ if ./scripts/build.sh >/dev/null 2>&1; then
 			no "adapter $agent registered but produced nothing"
 		fi
 	done
+
+	# The agent-skills adapter appends glob metadata to the description, so a module that
+	# passes the source-side limit can still ship an over-length skill. Check what is
+	# actually emitted, not what was written by hand.
+	over=0
+	for f in dist/agent-skills/.agents/skills/*/SKILL.md; do
+		[ -e "$f" ] || continue
+		d=$(sed -n '2,/^---$/p' "$f" | grep -m1 '^description:' | sed 's/^description:[[:space:]]*//')
+		if [ "${#d}" -gt 1024 ]; then
+			no "$(basename "$(dirname "$f")"): rendered description is ${#d} chars - Agent Skills allows 1024"
+			over=1
+		fi
+	done
+	[ "$over" -eq 0 ] && ok "rendered Agent Skills descriptions within the 1024 limit"
 else
 	no "build failed"
 fi
