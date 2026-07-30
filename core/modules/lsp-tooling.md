@@ -54,3 +54,6 @@ npm i -g pyright bash-language-server dockerfile-language-server-nodejs \
 - Finding every reference before a refactor — avoids grep false positives
 - Checking diagnostics and type information before claiming work is finished
 - Semantically safe cross-file renames
+
+Which query answers which investigation question, and how to read a negative result, is in
+`debugging`.
