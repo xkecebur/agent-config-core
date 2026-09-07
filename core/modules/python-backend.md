@@ -10,6 +10,49 @@ alwaysApply: false
 
 # Python Backend — Idioms & Conventions
 
+Framework choice decides whether a handler may block, and that is the difference between
+working code and a stalled event loop. Detect before writing one.
+
+## Detect the framework and data layer
+
+Read `pyproject.toml` / `requirements.txt` before writing a handler.
+
+| Marker | Stack | Consequence |
+|---|---|---|
+| `fastapi` | FastAPI | ASGI; a `def` handler runs in a threadpool, an `async def` handler must never block |
+| `django` | Django | Historically WSGI and sync; async views exist but the ORM is only partially async |
+| `flask` | Flask | WSGI, sync per request; async support needs an ASGI bridge |
+| `starlette` without FastAPI | Starlette | Raw ASGI — no automatic request validation |
+| `celery`, `rq`, `dramatiq` | Task queue | Work leaves the request; failures become invisible without result inspection |
+| `sqlalchemy` `2.x` | SQLAlchemy 2 | `select()` style; `AsyncSession` only with an async driver |
+| `psycopg2` | Sync driver | **Blocking** — never inside `async def` |
+| `psycopg` `3.x` / `asyncpg` | Async-capable driver | Required for a genuinely async data path |
+| `pydantic` `2.x` | Pydantic 2 | Rust core; v1 validators and config differ and do not port directly |
+
+Check `requires-python` too. Several idioms in this module (`list[str]`, `X | None`,
+`asyncio.to_thread`) assume a version that supports them.
+
+## Symptom → first thing to check
+
+| Symptom | Check first |
+|---|---|
+| Throughput collapses under load, CPU near idle | A blocking call inside `async def` — sync driver, `requests`, `time.sleep`, file I/O |
+| One slow endpoint freezes unrelated endpoints | Same cause: the event loop is shared, so one blocked coroutine stalls all of them |
+| `RuntimeError: Event loop is closed` at shutdown | A client or pool created on one loop and used or closed on another |
+| `RuntimeWarning: coroutine ... was never awaited` | A missing `await` — the call did nothing and returned a coroutine object |
+| Query counts grow linearly with rows returned | ORM N+1 — lazy relationship access in a loop, no `selectinload` / `joinedload` |
+| `DetachedInstanceError` | The object is used after its session closed — the session scope is narrower than the object's lifetime |
+| Data mutates between calls with no assignment | A mutable default argument, evaluated once at definition |
+| Works in a test, fails in production with stale data | A session or connection reused across requests instead of scoped per request |
+| `MemoryError` or RSS climbing on large result sets | The whole query materialised — stream with `yield_per` or paginate |
+| Type checker passes, runtime gets the wrong type | Hints are not enforced — nothing validated at the boundary |
+| CPU-bound work does not scale with threads | The GIL — needs processes or a task queue, not a threadpool |
+| `ImportError` only in the packaged build | An implicit namespace package or a module not declared in the package configuration |
+| Background task silently never runs | The task was created but not retained, and got garbage collected mid-flight |
+
+This is an entry point, not an answer. Confirm with a traceback, query logs, or a profile
+before acting. Investigation method → `debugging`.
+
 ## Async correctness
 
 The most damaging Python backend bug: a blocking call inside `async def`. It stalls the

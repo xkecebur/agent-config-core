@@ -9,6 +9,45 @@ alwaysApply: false
 
 # PHP Backend — Idioms & Conventions
 
+The runtime model matters more in PHP than the framework does: shared-nothing and
+long-running servers make opposite assumptions safe. Detect before assuming either.
+
+## Detect the framework and runtime
+
+Read `composer.json` before writing a controller.
+
+| Marker | Stack | Consequence |
+|---|---|---|
+| `laravel/framework` | Laravel | Container, facades, Eloquent; config caching changes how `env()` behaves |
+| `symfony/framework-bundle` | Symfony | Autowiring, DTOs plus the Validator component, Doctrine |
+| `slim/slim`, `laminas/*` | Micro or component stack | Little is provided by default — validation and error shape are yours |
+| `laravel/octane`, `spiral/roadrunner`, `openswoole/*` | Long-running runtime | **Shared-nothing no longer holds**: static and singleton state leaks between requests |
+| `doctrine/orm` | Doctrine | Identity map and explicit flush boundaries |
+| `illuminate/database` without Laravel | Eloquent standalone | Same N+1 behaviour, none of the framework's guardrails |
+
+Check `require.php` for the language version too. Enums, readonly properties, and
+constructor promotion are only available from PHP 8.x, and much published PHP predates them.
+
+## Symptom → first thing to check
+
+| Symptom | Check first |
+|---|---|
+| A comparison matches values that are clearly different | Loose `==` type juggling — needs `===`, and `declare(strict_types=1)` at the top of the file |
+| Query count grows with the number of rows rendered | Eloquent or Doctrine N+1 — a lazy relation touched inside a loop, no eager load |
+| `env()` returns null in production, works locally | Config was cached; `env()` outside a config file returns null once cached |
+| State leaks between unrelated requests | A long-running runtime (Octane, RoadRunner, Swoole) with static or singleton state that assumed shared-nothing |
+| Memory exhausted on a large export | The whole result set hydrated into objects — chunk or use a cursor |
+| Changes to code have no effect after deploy | OPcache serving the previous compilation — the cache was never reset |
+| `Headers already sent` | Output — often whitespace after a closing `?>` — emitted before the header call |
+| Doctrine changes never persist | No `flush()`, or the entity was never managed by the `EntityManager` |
+| Float amounts drift by small fractions | Money held in a float — use integer minor units or a decimal string |
+| Session fixation or lost sessions behind a load balancer | Session id not regenerated on login, or a file-backed session store with more than one node |
+| Uploads fail silently above a size | `upload_max_filesize` / `post_max_size` in the PHP configuration, not the application |
+| A slow external call ties up the whole worker pool | No timeout on the HTTP client; every worker is a process, so the pool exhausts fast |
+
+This is an entry point, not an answer. Confirm with the error log, a query log, or a
+profiler before acting. Investigation method → `debugging`.
+
 ## Strict types and comparison
 
 ```php
