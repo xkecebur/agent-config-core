@@ -22,6 +22,8 @@ selected by **the artifact being touched**, not all activated at once:
 | `.py`, `pyproject.toml` | Python backend | `python-backend` |
 | `.php`, `composer.json` | PHP backend | `php-backend` |
 | Endpoint or service design, external integration | Service design | `backend-patterns` |
+| REST contract, OpenAPI, response shape, pagination | API contract | `api-contract` |
+| Login, sessions, OAuth/OIDC, tokens, MFA, access checks | Auth implementation | `auth-implementation` |
 | `.sql` (queries, indexes) | Database review | `pg-review` |
 | Migration files, production DB issues | Database operations | `db-operations` |
 | `.tf`, `.tfvars` | Infrastructure as code | `iac-review` |
