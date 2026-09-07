@@ -8,11 +8,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 First public release. Extracted from a working single-agent setup and generalised.
 
 ### Added
-- Neutral core: 15 modules under `core/modules/`, agent-independent
+- Neutral core: 17 modules under `core/modules/`, agent-independent
 - Constitution (`AGENTS.md`) holding only cross-domain rules
 - Language modules: `java-backend`, `go-backend`, `node-backend`, `python-backend`, `php-backend`
-- Cross-cutting modules: `backend-patterns`, `db-operations`, `pg-review`, `iac-review`,
-  `devops-pipeline`, `security-audit`, `blue-team-detection`, `pr-review`, `lsp-tooling`
+- Cross-cutting modules: `backend-patterns`, `api-contract`, `auth-implementation`,
+  `db-operations`, `pg-review`, `iac-review`, `devops-pipeline`, `security-audit`,
+  `blue-team-detection`, `pr-review`, `lsp-tooling`
 - Adapters for Claude Code, Cursor, GitHub Copilot, Windsurf, opencode, and the
   cross-client Agent Skills standard (`scripts/render.py`). opencode modules render as
   `.opencode/agents/*.md` subagents rather than `opencode.json` `instructions` globs,
@@ -52,9 +53,27 @@ First public release. Extracted from a working single-agent setup and generalise
   default connection pool, `rows.Err()`, and pgx behind PgBouncer in transaction mode
 - Symptom-to-cause tables in `java-backend` and `go-backend`, so the language module is
   reachable while debugging rather than only while writing code
+- `api-contract` module — REST contract design and drift prevention: spec-first versus
+  code-first, generated client types instead of hand-written ones, the RFC 9457 Problem
+  Details error shape with a stable machine-branchable `type`, offset versus cursor
+  pagination and why a cursor key needs a tiebreaker, `Idempotency-Key` on state-changing
+  `POST`, the additive-versus-breaking change list, and failing CI when regenerated output
+  differs from what is committed
+- `auth-implementation` module — building authentication rather than reviewing it: choosing
+  session cookies versus JWT versus a delegated IdP before choosing a library, the
+  `__Host-` cookie prefix against subdomain cookie tossing, OAuth 2.1 `state`/PKCE/`nonce`
+  and exact-match `redirect_uri`, refresh token rotation with reuse detection that revokes
+  the family, password and MFA storage rules, and object-level authorisation with step-up
+  on sensitive operations
+- `node-backend`, `python-backend`, and `php-backend` gain the detection step and
+  symptom-to-cause table that `java-backend` and `go-backend` already had, so all five
+  language modules now open the same way: read the manifest, then map the symptom. Node
+  detection distinguishes Express 4 from Express 5 async error handling; Python detection
+  separates blocking from async drivers; PHP detection flags long-running runtimes where
+  shared-nothing no longer holds
 
 ### Notes
-- Only the Claude Code adapter has been verified in a running tool. The other four are
+- Only the Claude Code adapter has been verified in a running tool. The other five are
   generated but unverified — see the support matrix in the README.
 - `java-backend`, `pg-review`, `pr-review`, `security-audit`, and `lsp-tooling` come from
   daily use. The remaining modules are newer and have had less exposure.

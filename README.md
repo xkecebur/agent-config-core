@@ -71,6 +71,8 @@ instruction.** A model can forget to run a secret scan. A pre-commit hook cannot
 | Module | Covers |
 |---|---|
 | `backend-patterns` | Idempotency, timeout budgets, retry/backoff/jitter, circuit breakers, pagination, transactional outbox, cache stampede, error contracts, graceful shutdown |
+| `api-contract` | Spec-first vs code-first, generated client types, RFC 9457 Problem Details, offset vs cursor pagination, idempotency keys, the breaking-change list, drift detection in CI |
+| `auth-implementation` | Session vs JWT vs delegated IdP, cookie prefixes, OAuth `state`/PKCE/`nonce`/`redirect_uri`, refresh rotation with reuse detection, object-level authorisation, step-up |
 | `debugging` | Evidence before hypothesis, bisecting by input/commit/layer, language-server investigation loop, falsifiable predictions, verification before claiming a fix |
 | `db-operations` | Lock-safe DDL table, expand-contract migrations, bloat/autovacuum, replication, PITR, pooling |
 | `pg-review` | Query plans, index strategy, schema review |
