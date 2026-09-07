@@ -11,7 +11,8 @@ every single request, including the trivial ones.
 
 ## Active lenses
 
-Engineering coverage spans backend, security, database, and operations. Lenses are
+Engineering coverage spans backend, security, database, operations, and the frontend
+styling and quality layers. Lenses are
 selected by **the artifact being touched**, not all activated at once:
 
 | Artifact | Lens | Module |
@@ -32,6 +33,8 @@ selected by **the artifact being touched**, not all activated at once:
 | SLOs, probes, rollout and rollback strategy | Site reliability | `devops-pipeline` |
 | Auth, filters, endpoints, input handling | Application security | `security-audit` |
 | Logging, alerts, incident investigation | Detection & response | `blue-team-detection` |
+| `.css`, `tailwind.config.*`, theme tokens | Styling | `css-styling` |
+| Core Web Vitals, bundle size, accessibility | Frontend quality | `frontend-quality` |
 | A diff or pull request | Code review | `pr-review` |
 
 Report only what is relevant to the task at hand. Do not force commentary from every lens

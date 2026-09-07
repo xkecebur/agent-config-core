@@ -1,12 +1,13 @@
 # Agent Config Core
 
-**Backend engineering knowledge for AI coding agents — written once, generated for every
-agent.**
+**Backend and web engineering knowledge for AI coding agents — written once, generated for
+every agent.**
 
-Built for backend engineers whose work does not stop at application code: the same person
-writes the service, tunes the query, reviews the Terraform, and gets paged when it breaks.
-The modules follow that reality — five backend languages, database operations, infrastructure,
-CI/CD, application security, and detection.
+Built for engineers whose work does not stop at application code: the same person writes the
+service, tunes the query, reviews the Terraform, and gets paged when it breaks. The modules
+follow that reality — five backend languages, database operations, infrastructure, CI/CD,
+application security, and detection — plus the two frontend concerns that reach a backend
+engineer anyway: the styling layer and measurable page quality.
 
 Most agent-configuration repos are a pile of instructions for one tool. This one separates
 *what you know* from *how a particular agent loads it*, so the same modules run on Claude
@@ -15,8 +16,12 @@ Code, Cursor, GitHub Copilot, Windsurf, opencode, and every client implementing 
 one adapter function, not rewriting the content. The constitution is also emitted as
 `AGENTS.md`, which many other agents read with no adapter at all.
 
-**Not** a general-purpose prompt collection. There is nothing here about frontend, mobile,
-data science, or writing marketing copy.
+**Not** a general-purpose prompt collection. There is nothing here about mobile, data
+science, or writing marketing copy. Frontend coverage is deliberately narrow: the styling
+layer (`css-styling`) and measurable quality (`frontend-quality`). There are no
+framework-specific frontend modules — no React, no Next.js, no component library — because
+those are not written from daily use here, and a module that could not be wrong is not worth
+the context it costs.
 
 ---
 
@@ -82,6 +87,13 @@ instruction.** A model can forget to run a secret scan. A pre-commit hook cannot
 | `blue-team-detection` | Useful logging, detection engineering, attack-technique → detection-signal mapping, incident triage |
 | `pr-review` | Review checklist per language |
 | `lsp-tooling` | Language server setup, limitations, troubleshooting |
+
+**Frontend** — the two concerns that reach a backend engineer anyway:
+
+| Module | Covers |
+|---|---|
+| `css-styling` | Tailwind v3 vs v4 detection, CSS-first `@theme` configuration, the v3→v4 changes that fail silently, dynamic class names that never generate, `tailwind-merge` for class conflicts, cva variants, class-based dark mode, CSS-in-JS SSR traps |
+| `frontend-quality` | Core Web Vitals thresholds and lab-vs-field data, a symptom table for LCP/INP/CLS, bundle budgets enforced in CI, WCAG 2.2 AA — keyboard reachability, overlay focus management, form labelling, contrast and target size |
 
 Modules are opinionated on purpose. `db-operations` tells you *which* DDL statements rewrite
 a table; `devops-pipeline` shows the exact `pull_request_target` shape that leaks secrets;

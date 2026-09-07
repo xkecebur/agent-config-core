@@ -8,7 +8,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 First public release. Extracted from a working single-agent setup and generalised.
 
 ### Added
-- Neutral core: 17 modules under `core/modules/`, agent-independent
+- Neutral core: 19 modules under `core/modules/`, agent-independent
 - Constitution (`AGENTS.md`) holding only cross-domain rules
 - Language modules: `java-backend`, `go-backend`, `node-backend`, `python-backend`, `php-backend`
 - Cross-cutting modules: `backend-patterns`, `api-contract`, `auth-implementation`,
@@ -71,12 +71,27 @@ First public release. Extracted from a working single-agent setup and generalise
   detection distinguishes Express 4 from Express 5 async error handling; Python detection
   separates blocking from async drivers; PHP detection flags long-running runtimes where
   shared-nothing no longer holds
+- `css-styling` module — the styling layer: detecting Tailwind v3 versus v4 before writing
+  syntax that fails silently in the wrong one, CSS-first `@theme` configuration and why a
+  plain `:root` custom property produces no utility class, the v3-to-v4 renames that shift
+  sizes or remove focus rings without an error, dynamic class names that never generate
+  (the usual cause of "works in dev, missing in production"), `tailwind-merge` for class
+  conflicts, cva variants, class-based dark mode, and the SSR traps in CSS-in-JS
+- `frontend-quality` module — measurable page quality: Core Web Vitals thresholds judged at
+  the 75th percentile of real users rather than one Lighthouse run, a symptom table for
+  LCP/INP/CLS, bundle budgets enforced as a build failure, and practical WCAG 2.2 AA —
+  the first rule of ARIA, keyboard reachability, overlay focus return, form label and error
+  association, contrast and target size
+- Scope widened from backend-only to backend plus two frontend concerns. The README said
+  there was "nothing here about frontend"; that is no longer true, and the sentence now
+  states what is still excluded — mobile, data science — and why there are no
+  framework-specific frontend modules
 
 ### Notes
 - Only the Claude Code adapter has been verified in a running tool. The other five are
   generated but unverified — see the support matrix in the README.
-- `java-backend`, `pg-review`, `pr-review`, `security-audit`, and `lsp-tooling` come from
-  daily use. The remaining modules are newer and have had less exposure.
+- `java-backend`, `pg-review`, `pr-review`, `security-audit`, `lsp-tooling`,
+  `css-styling`, and `frontend-quality` come from daily use. The remaining modules are newer and have had less exposure.
 - Within `java-backend`, only the Spring Boot content is daily use. The Quarkus,
   Micronaut, Vert.x, Helidon, and Ktor entries are researched rather than lived, and stay
   limited to detection markers and each framework's known failure modes.
