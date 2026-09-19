@@ -60,8 +60,8 @@ instruction.** A model can forget to run a secret scan. A pre-commit hook cannot
 
 | Module | Covers |
 |---|---|
-| `java-backend` | Paradigm detection (MVC vs WebFlux), persistence choice, per-paradigm checklist |
-| `go-backend` | Error wrapping and sentinels, context propagation, goroutine lifecycle, server timeouts, table-driven tests |
+| `java-backend` | Framework detection across Spring/Quarkus/Micronaut/Vert.x/Jakarta EE, paradigm detection, persistence choice, symptom table, per-paradigm checklist |
+| `go-backend` | Router and data-layer detection, error wrapping and sentinels, context propagation, goroutine lifecycle, pool bounds, server timeouts, symptom table, table-driven tests |
 | `node-backend` | Event-loop blocking, async correctness, unhandled rejections, TS strictness vs runtime validation, backpressure |
 | `python-backend` | Blocking calls inside `async def`, Pydantic at the boundary, ORM session scope and N+1, GIL and worker model |
 | `php-backend` | `strict_types` and type juggling, PHP 8 idioms (enums, readonly, `match`), PDO, Eloquent N+1, shared-nothing runtime |
@@ -71,6 +71,7 @@ instruction.** A model can forget to run a secret scan. A pre-commit hook cannot
 | Module | Covers |
 |---|---|
 | `backend-patterns` | Idempotency, timeout budgets, retry/backoff/jitter, circuit breakers, pagination, transactional outbox, cache stampede, error contracts, graceful shutdown |
+| `debugging` | Evidence before hypothesis, bisecting by input/commit/layer, language-server investigation loop, falsifiable predictions, verification before claiming a fix |
 | `db-operations` | Lock-safe DDL table, expand-contract migrations, bloat/autovacuum, replication, PITR, pooling |
 | `pg-review` | Query plans, index strategy, schema review |
 | `iac-review` | Terraform state security, pinning, the misconfigurations that become incidents |
@@ -212,13 +213,19 @@ before adopting it.
 | Status | Modules |
 |---|---|
 | Daily use | `java-backend`, `pg-review`, `pr-review`, `security-audit`, `lsp-tooling` |
-| Newer, less exposure | `backend-patterns`, `go-backend`, `node-backend`, `python-backend`, `php-backend`, `db-operations`, `iac-review`, `devops-pipeline`, `blue-team-detection` |
+| Newer, less exposure | `backend-patterns`, `debugging`, `go-backend`, `node-backend`, `python-backend`, `php-backend`, `db-operations`, `iac-review`, `devops-pipeline`, `blue-team-detection` |
 
 The per-language modules were written to a consistent bar — each one names the failure mode
 that specific runtime produces, not generic advice with the language's name attached. But
 only `java-backend` and `go-backend` have an author who works in that stack daily. If you
 write Node, Python, or PHP for a living and something reads as textbook rather than
 experience, that is exactly the correction worth opening a PR for.
+
+Two scope caveats worth stating plainly. Within `java-backend`, the Spring Boot content is
+daily-use; the Quarkus, Micronaut, Vert.x, Helidon, and Ktor entries are researched rather
+than lived, and are deliberately limited to detection markers and the failure modes those
+frameworks are known for. And `debugging` codifies a method rather than a stack, so its
+value depends on the language module it is paired with.
 
 ---
 

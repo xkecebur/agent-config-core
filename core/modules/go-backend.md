@@ -1,6 +1,6 @@
 ---
 name: go-backend
-description: Go backend idioms and conventions — error wrapping and sentinel errors, context propagation, goroutine lifecycle and leak prevention, interface placement, zero values, HTTP server timeouts, graceful shutdown, and table-driven tests. Use when writing, changing, or reviewing Go code, designing a Go service, or when go.mod is present.
+description: Go backend idioms and conventions — router and data-layer detection (net/http, chi, gin, echo, fiber, gRPC; database/sql, pgx, sqlc, GORM), error wrapping and sentinel errors, context propagation, goroutine lifecycle and leak prevention, interface placement, zero values, HTTP server timeouts, graceful shutdown, table-driven tests, and a symptom-to-cause table. Use when writing, changing, or reviewing Go code, designing a Go service, when go.mod is present, or when debugging a Go runtime error — context deadline exceeded, nil pointer dereference, a non-nil error that should be nil, goroutine leak, data race, too many connections, a hanging HTTP client.
 globs:
   - "**/*.go"
   - "**/go.mod"
@@ -8,6 +8,50 @@ alwaysApply: false
 ---
 
 # Go Backend — Idioms & Conventions
+
+## Detect the router and data layer
+
+Read `go.mod` first. The choice changes which idioms apply — not every Go service is
+`net/http`, and one of the popular options is not even built on it.
+
+| `go.mod` marker | Consequence |
+|---|---|
+| no third-party router | `net/http`; Go 1.22+ `ServeMux` handles method + path patterns |
+| `go-chi/chi` | Plain `http.Handler` — stdlib middleware composes unchanged |
+| `gin-gonic/gin` | `*gin.Context`, not `http.Handler`; stdlib middleware needs `gin.WrapH` |
+| `labstack/echo` | `echo.Context`; the validator must be registered or `c.Validate` silently does nothing |
+| `gofiber/fiber` | Built on **fasthttp, not `net/http`** — stdlib middleware does not apply, and `*fiber.Ctx` must never outlive the handler because its buffers are reused |
+| `google.golang.org/grpc` | Interceptors instead of middleware; deadlines propagate through context |
+| `jackc/pgx` | Native driver; `pgxpool` rather than `database/sql` |
+| `sqlc.yaml` | Queries generated from SQL — regenerate on schema change, verify in CI |
+| `gorm.io/gorm` | ORM; generated SQL is hidden, inspect it on hot paths |
+
+Greenfield fallback: `net/http` (or chi once routing is non-trivial), `pgx` + `sqlc`,
+PostgreSQL, `cmd/` plus `internal/`. State the choice so it can be corrected.
+
+## Symptom → first thing to check
+
+| Symptom | Check first |
+|---|---|
+| `context deadline exceeded`, intermittent | Timeout too tight, or `ctx` reused for work that outlives the response |
+| `context canceled` in background work | A goroutine kept `r.Context()` — it is cancelled the moment the response is written |
+| `err != nil` is true after returning `nil` | Nil interface trap — a typed nil pointer assigned to `error` is not `nil` |
+| Whole process dies on one bad request | No panic-recovery middleware |
+| Memory and goroutine count climb forever | A goroutine with no stop condition; a channel with no reader |
+| `WARNING: DATA RACE` | Shared state without a mutex or channel; loop variable captured (Go < 1.22) |
+| `too many connections` on the database | `SetMaxOpenConns` never set — the default is unlimited |
+| `prepared statement "lrupsc_..." does not exist` | pgx behind PgBouncer in transaction mode — disable statement caching |
+| `sql: no rows in result set` reaching the client | `sql.ErrNoRows` not mapped to a domain error |
+| GORM update silently skips fields | Struct updates omit zero values (`0`, `""`, `false`) — use a map or `Select` |
+| Rows missing with no error | `rows.Err()` never checked after the `rows.Next()` loop |
+| HTTP client hangs forever | `http.Client` used without `Timeout` |
+| File descriptors exhausted | `resp.Body.Close()` missing, or `defer` inside a loop |
+| Fields tearing between requests (fiber) | `*fiber.Ctx` stored or used after the handler returned |
+| Error response written, handler chain continues (gin) | `c.Abort()` not called |
+| gRPC call never returns | Client set no deadline |
+
+This is an entry point, not an answer. Confirm with `go test -race`, `pprof`, a log line, or
+`gopls` diagnostics before acting. Investigation method → `debugging`.
 
 ## Errors
 
@@ -107,6 +151,29 @@ srv := &http.Server{
   _ = srv.Shutdown(ctx)
   ```
 
+## Data access
+
+The default pool is the trap: `database/sql` opens **unlimited** connections, so the limit
+is discovered on the PostgreSQL side during a traffic spike.
+
+```go
+db.SetMaxOpenConns(n)                    // align with max_connections / the PgBouncer pool
+db.SetMaxIdleConns(n)
+db.SetConnMaxLifetime(30 * time.Minute)  // required when a proxy or LB drops idle connections
+```
+
+- Always the `...Context` variants: `QueryContext`, `ExecContext`, `QueryRowContext`
+- `defer rows.Close()` **and** check `rows.Err()` after the loop — a mid-iteration failure
+  is otherwise silent data loss
+- Map `sql.ErrNoRows` with `errors.Is` to a domain error; never let it reach the client
+- `defer tx.Rollback()` immediately after `Begin` — rollback after a successful commit is a no-op
+- Parameterised queries only. Dynamic identifiers (table or column names) are validated
+  against an allowlist, never escaped by hand
+- pgx behind PgBouncer in transaction mode: disable the prepared-statement cache, or every
+  other query fails with a missing statement
+- GORM: `AutoMigrate` is not a migration tool — use goose, golang-migrate, or atlas, and
+  keep migrations reviewed like code
+
 ## Testing
 
 - **Table-driven tests** are the default idiom:
@@ -136,8 +203,14 @@ srv := &http.Server{
 - [ ] Interfaces defined at the consumer, kept small
 - [ ] `defer` inside a loop reviewed — it runs at function exit, not iteration end
 - [ ] Tests table-driven; CI runs `-race`
+- [ ] Connection pool bounded — `SetMaxOpenConns` is set, not left at the default
+- [ ] Panic-recovery middleware installed on every server
+- [ ] Parameterised queries only; no `fmt.Sprintf` into SQL
 
 ## Related modules
 
+- Bug investigation method, evidence discipline, language-server-driven navigation → `debugging`
 - Cross-language service design → `backend-patterns`
 - Injection sinks (`template.HTML`, `exec.Command`) → `security-audit`
+- Query plans and index strategy → `pg-review`
+- Migrations, pooling, and production database operations → `db-operations`
