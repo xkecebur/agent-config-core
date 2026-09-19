@@ -13,6 +13,55 @@ alwaysApply: false
 
 # Node.js / TypeScript Backend — Idioms & Conventions
 
+Express is the most common Node stack, not the only one, and the differences between them
+change what correct code looks like. Detect before writing a handler.
+
+## Detect the framework and data layer
+
+Read `package.json` before writing a single route.
+
+| Marker | Stack | Consequence |
+|---|---|---|
+| `express` `^5` | Express 5 | A rejected async handler **does** reach the error middleware |
+| `express` `^4` | Express 4 | A rejected async handler does **not** — every one needs wrapping |
+| `fastify` | Fastify | Schema-first; responses are serialised through JSON Schema |
+| `@nestjs/core` | NestJS | DI and decorators, the closest Node idiom to Spring |
+| `hono` | Hono | Web-standard `Request`/`Response`, runs on Node and on edge runtimes |
+| `koa` | Koa | Middleware is a chained `async` stack; errors propagate through `await next()` |
+| `@prisma/client` | Prisma | Client must be a singleton; pool sizing is per process |
+| `drizzle-orm` | Drizzle | SQL-first, types derived from the schema |
+| `pg`, `postgres`, `kysely` | Driver or query builder | Pool lifecycle is yours to manage |
+| `zod`, `valibot` | Boundary validation | Confirm it runs server-side, not only on a form |
+
+Also check `"type"` in `package.json` (`module` vs `commonjs`) and `engines.node`. A wrong
+ESM/CJS assumption is the single most confusing class of import error in this ecosystem.
+
+## Symptom → first thing to check
+
+| Symptom | Check first |
+|---|---|
+| Process dies with no trace, exit code 1 | A rejected promise with no handler — since Node 15 `unhandledRejection` **terminates the process** |
+| `ERR_HTTP_HEADERS_SENT` | The response is sent twice — a missing `return` after `res.json()`, or an error handler writing again |
+| Every request slows at once, not just one | The event loop is blocked: a large loop, a huge `JSON.parse`, catastrophic backtracking, sync crypto, `readFileSync` |
+| `EADDRINUSE` on restart | The old process is still alive — shutdown never closed the server and its keep-alive sockets |
+| A request hangs with no response and no error | An `await` that never resolves, or a handler that never returns a response |
+| Hangs only when calling another service | An HTTP client with no timeout — Node applies no default |
+| Sporadic `ECONNRESET` / `socket hang up` | A keep-alive agent reusing a socket the upstream already closed, with no idempotent retry |
+| RSS climbs and never falls | Listeners, timers, or intervals with no removal path; an unbounded cache; a closure pinning a large request |
+| `MaxListenersExceededWarning` | A listener attached inside a request handler and never removed |
+| Connection pool timeout under load | Pool smaller than concurrency, or connections leaked by a transaction that never closes on the error path |
+| `too many connections` at PostgreSQL | Every replica or worker opens its own pool — pool size × replicas exceeds `max_connections` |
+| Empty body or `413` | The body parser limit, or the parser mounted after the route |
+| Large uploads exhaust memory | The file is buffered instead of streamed — backpressure ignored |
+| Env var `undefined` in production, fine locally | Config read in a module that was bundled or tree-shaken, or `.env` never loaded in that environment |
+| Logs vanish when the container is killed | Shutdown never flushed, or `process.exit()` was called directly |
+| Stack traces do not point at the original source | Source maps not enabled (`--enable-source-maps`) |
+| Amounts are wrong but nothing errors | Money held in a `number` — use integer minor units or a decimal type |
+
+This is an entry point, not an answer. Confirm with evidence — `--cpu-prof`, a heap
+snapshot, structured logs, language server diagnostics — before acting. Investigation
+method → `debugging`.
+
 ## The event loop is single-threaded
 
 Every synchronous millisecond blocks **every** in-flight request. This is the failure mode
