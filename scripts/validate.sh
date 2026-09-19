@@ -119,6 +119,45 @@ else
 fi
 
 echo
+echo "install"
+# install.sh is the first command a new user runs against a fresh clone, and nothing here
+# exercised it until a missing executable bit shipped. Both failures below are invisible in
+# a working tree that already has the bits set locally.
+if git rev-parse --git-dir >/dev/null 2>&1; then
+	# The mode lives in the index, not on disk: a local chmod fixes your own clone and
+	# leaves everyone else's broken. Check the class, not just install.sh.
+	badmode=0
+	while IFS= read -r f; do
+		[ -f "$f" ] || continue
+		head -1 "$f" | grep -q '^#!' || continue
+		mode=$(git ls-files -s -- "$f" | cut -d' ' -f1)
+		if [ "$mode" != "100755" ]; then
+			no "$f: has a shebang but is committed as $mode, not 100755"
+			badmode=1
+		fi
+	done < <(git ls-files)
+	[ "$badmode" -eq 0 ] && ok "every committed script with a shebang is executable"
+else
+	echo "  skip  executable bits (not a git checkout)"
+fi
+
+# End-to-end: a clean target must receive every file the adapter generated. stdin is closed
+# because install.sh prompts on conflicts, and a prompt in CI would hang rather than fail.
+instdir=$(mktemp -d)
+if ./scripts/install.sh claude-code "$instdir" </dev/null >/dev/null 2>&1; then
+	want=$(find dist/claude-code -type f | wc -l | tr -d ' ')
+	got=$(find "$instdir" -type f | wc -l | tr -d ' ')
+	if [ "$got" -eq "$want" ]; then
+		ok "install.sh copied $got files into a clean target"
+	else
+		no "install.sh copied $got of $want files"
+	fi
+else
+	no "install.sh failed on a clean target"
+fi
+rm -rf "$instdir"
+
+echo
 echo "hooks"
 if ! command -v jq >/dev/null 2>&1; then
 	no "jq not installed - hooks cannot run"
