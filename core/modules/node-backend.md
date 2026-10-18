@@ -46,6 +46,7 @@ ESM/CJS assumption is the single most confusing class of import error in this ec
 | `EADDRINUSE` on restart | The old process is still alive — shutdown never closed the server and its keep-alive sockets |
 | A request hangs with no response and no error | An `await` that never resolves, or a handler that never returns a response |
 | Hangs only when calling another service | An HTTP client with no timeout — Node applies no default |
+| Whole process exits on `ERR_INVALID_STATE: ReadableStream is already closed`, stack only in undici internals | A `fetch()` timeout signal fired after the headers arrived, while the body was still streaming (observed on Node 22). It throws from a microtask, outside any `try/catch` — see *Errors* |
 | Sporadic `ECONNRESET` / `socket hang up` | A keep-alive agent reusing a socket the upstream already closed, with no idempotent retry |
 | RSS climbs and never falls | Listeners, timers, or intervals with no removal path; an unbounded cache; a closure pinning a large request |
 | `MaxListenersExceededWarning` | A listener attached inside a request handler and never removed |
@@ -119,6 +120,24 @@ await Promise.all(items.map(save));
   process.on('unhandledRejection', (e) => { logger.fatal(e); process.exit(1); });
   ```
 
+**A `try/catch` around `await fetch()` does not cover the body.** `await fetch()` resolves
+when the headers arrive. If the `AbortSignal.timeout` passed to it fires while the body is
+still streaming, the failure happens later — and in the case above, undici throws from a
+microtask that no caller can catch. Node's default for an uncaught exception is exit 1, so
+**one slow upstream response kills every request in flight on that instance**. This bites
+hardest in a proxy or BFF, where one process serves every user.
+
+- Read the body inside the same `try` that awaited the headers (`await res.text()`,
+  `await res.arrayBuffer()`), so the timeout surfaces where it can be handled — or pipe it
+  with `pipeline()`, which propagates the error
+- Decide deliberately what the timeout spans: headers only, or headers and body. Write it in
+  a comment; the next reader will assume the other one
+- If an `uncaughtException` handler tolerates anything, keep the list **narrow and
+  code-based** (the stream-teardown code above), log it, and exit on everything else.
+  "Never exit" trades a visible restart for a process serving from unknown state
+- Shutdown triggered from both a signal and a fatal error needs a guard, so a `SIGTERM`
+  arriving mid-close does not call `server.close()` twice
+
 ## TypeScript
 
 - `strict: true` in `tsconfig.json`. Without it, most of the type safety you are paying for
@@ -169,6 +188,8 @@ await Promise.all(items.map(save));
 - [ ] Every promise awaited or explicitly caught
 - [ ] Errors are `Error` instances with a preserved `cause`
 - [ ] Centralized error handler; async handlers forward rejections
+- [ ] Outbound `fetch()` reads its body inside the same error handling as the call, under a
+      timeout whose span (headers, or headers and body) is stated
 - [ ] `strict: true`; request bodies validated at runtime, not just typed
 - [ ] Response and body sizes bounded; large payloads streamed
 - [ ] Single pool created at startup; graceful shutdown implemented

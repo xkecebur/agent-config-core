@@ -1,6 +1,6 @@
 ---
 name: frontend-quality
-description: Measurable frontend quality — Core Web Vitals (LCP, INP, CLS) with their thresholds, a symptom-to-cause table, and the difference between lab and field data; JavaScript bundle budgets and diagnosing a size regression; and practical WCAG 2.2 AA accessibility covering semantics, keyboard reachability, focus management in overlays, form labelling and error association, contrast and target size, live regions, and the first rule of ARIA. Use when a page feels slow, a Lighthouse score drops, layout shifts during load, interactions feel laggy, a bundle grows, when building a modal, dropdown, form or table that must work by keyboard and screen reader, or when asked for a performance or accessibility audit.
+description: Measurable frontend quality — Core Web Vitals (LCP, INP, CLS) with their thresholds, a symptom-to-cause table, and the difference between lab and field data; JavaScript bundle budgets and diagnosing a size regression; locale-consistent date and number formatting and money that never passes through Number; and practical WCAG 2.2 AA accessibility covering semantics, keyboard reachability, focus management in overlays, form labelling and error association, contrast and target size, live regions, and the first rule of ARIA. Use when a page feels slow, a Lighthouse score drops, layout shifts during load, interactions feel laggy, a bundle grows, dates or amounts display inconsistently, when building a modal, dropdown, form or table that must work by keyboard and screen reader, or when asked for a performance or accessibility audit.
 alwaysApply: false
 ---
 
@@ -49,6 +49,21 @@ analyser for size, `web-vitals` for field data. Investigation method → `debugg
 - Watch barrel files (`index.ts`) that drag in a whole module graph. Import the specific path
 - Date, chart, and icon libraries are the three most common sources of bloat. Check whether
   ten icons arrived with a package containing thousands
+
+## Locale and number formatting
+
+Formatting is correctness, not polish: a user who reads `1.234` as one thousand and the app
+meant one point two three four has been told the wrong amount.
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Hydration mismatch warning on a date or number | `toLocaleString()` with no locale, or `"default"`, resolves to the server's locale during render and the browser's after hydration | Pass an explicit locale everywhere; never let the runtime choose |
+| Mixed conventions on one screen — English labels, local month names, `1.234,50` | Each formatting layer has its own locale setting: the date library (date-fns `locale`), `Intl`/`toLocaleString`, the calendar component, and any hand-rolled grouping | Pick one locale for the app and set it in **every** layer; grep for `toLocaleString`, `Intl.`, `locale:` and separator regexes to find them all |
+| A large amount displays wrong digits, or a cent off | The value passed through `Number`: integers above 2⁵³ − 1 lose digits and decimals pick up binary rounding — with no error | Keep money as the string or integer minor units the API sent. Format with string grouping, a `BigInt`, or `Intl.NumberFormat.format()` given the **string** (exact-decimal input, Intl.NumberFormat v3 / ES2023) — never `parseFloat` → `toFixed` |
+
+The money rule matches the backend's (→ `node-backend`): if the server went to the trouble of
+`NUMERIC` or integer minor units, the frontend must not undo it at the one place a human
+reads the value.
 
 ## Accessibility — practical WCAG 2.2 AA
 
@@ -117,6 +132,8 @@ Three layers, none of which replaces another:
 - [ ] New modal or dropdown: focus trapped, `Escape` closes, focus returns to the trigger
 - [ ] New inputs have associated labels and linked error messages
 - [ ] axe is clean on the pages touched
+- [ ] Every date and number formatter names its locale explicitly; amounts never pass
+      through `Number`
 
 Be honest about the limits: a type check and a successful build prove nothing about
 performance or accessibility. If it has not been measured or walked with a keyboard, say so

@@ -109,6 +109,32 @@ in a body that JavaScript can touch.
   require **step-up**: a password or MFA re-confirmation, not merely a valid session
 - Logout revokes the session **on the server**, not just by clearing the browser cookie
 
+## Backend-for-frontend — the browser holds a session, the server holds the credential
+
+When the browser must reach an internal API that takes a privileged credential, put a thin
+server of your own in between: the browser talks only to it with a session cookie, and the
+credential never leaves the server. What goes wrong:
+
+| Shortcut | Consequence |
+|---|---|
+| One shared service token for every user | Every request arrives upstream as the same caller. Audit trails lose the actor, per-caller rate limits become one bucket for the whole team, and any maker-checker rule (`approved_by <> requested_by`) rejects every approval |
+| Forwarding any path the browser asks for | An open proxy to the whole internal API with the credential already attached. Allowlist the paths, mirroring the upstream's own default-deny |
+| Streaming the request body straight upstream | The body-size limit is advisory. Read it first, then enforce the cap |
+| Retrying failed upstream calls | A retried `POST` that moves money or changes state happens twice → `api-contract` (idempotency) |
+| Rewriting upstream errors into a generic `500`, or a `200` | The client cannot tell a refusal from an outage. Forward the error body and status intact |
+| Dropping `traceparent` | The browser request cannot be joined to the upstream logs → `blue-team-detection` |
+| A sealed cookie carrying the credential itself | Cannot be revoked before it expires. The cookie carries a session id; the credential lives in a server-side store whose row can be deleted |
+
+Forward the **user's** identity upstream — exchanged or minted per session — never a
+credential the BFF holds for itself. Upstream timeouts, and what a timeout spans → `node-backend`.
+
+**Server-side rendering and the BFF.** A loader that runs during server rendering and calls
+the BFF by relative URL (`/api/...`) fails — there is no origin to resolve against, and the
+server-side call would not carry the user's cookie anyway. Either render those routes
+client-only, or make the server-side path forward the incoming cookie to an absolute
+internal URL deliberately. A route that works on in-app navigation and returns `500` on a
+direct load or refresh is the signature.
+
 **Never guess an auth library's API.** Read the installed package or the official docs
 first. A wrong argument in an auth configuration is a vulnerability, not a typo.
 
@@ -124,6 +150,8 @@ first. A wrong argument in an auth configuration is a vulnerability, not a typo.
 - [ ] Password or email change revokes other sessions and requires step-up
 - [ ] Object-level authorisation tested with **two real accounts**, not just two roles
 - [ ] No auth secret reachable from client-side code → `security-audit`
+- [ ] BFF: per-user identity forwarded upstream, path allowlist, body cap enforced, no
+      retries of state-changing calls
 
 ## Related modules
 
