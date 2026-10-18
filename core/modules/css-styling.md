@@ -1,6 +1,6 @@
 ---
 name: css-styling
-description: Styling and design tokens — detecting Tailwind v3 versus v4 before writing syntax, CSS-first configuration with @import "tailwindcss", @theme, @custom-variant and @utility, the v3-to-v4 changes that fail silently, dynamic class names that never generate, class conflict resolution with tailwind-merge, component variants with cva, class-based dark mode, oklch colour tokens, and the non-Tailwind alternatives with their SSR traps. Use when writing or reviewing Tailwind classes, setting up theme tokens, fixing styles that work in development and vanish in production, wiring dark mode, building component variants, migrating Tailwind v3 to v4, or touching a CSS entry file or Tailwind config.
+description: Styling and design tokens — detecting Tailwind v3 versus v4 before writing syntax, CSS-first configuration with @import "tailwindcss", @theme, @custom-variant and @utility, the v3-to-v4 changes that fail silently, dynamic class names that never generate, class conflict resolution with tailwind-merge, component variants with cva, class-based dark mode, oklch colour tokens, flex layout and token traps that masquerade as other bugs, and the non-Tailwind alternatives with their SSR traps. Use when writing or reviewing Tailwind classes, setting up theme tokens, fixing styles that work in development and vanish in production, content cut off beside a sidebar, wiring dark mode, building component variants, migrating Tailwind v3 to v4, or touching a CSS entry file or Tailwind config.
 globs:
   - "**/*.css"
   - "**/tailwind.config.js"
@@ -145,6 +145,25 @@ a caller's `className` can still override.
 scale stays consistent and contrast is easier to hold. Contrast targets and how to verify
 them → `frontend-quality`.
 
+## Layout and token traps that look like something else
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| Content cut off on the right, or a horizontal page scrollbar, only while a sidebar is open | The main column is a flex item, and a flex item's default `min-width` is `auto` — its content's width. A wide table or a chart canvas sized in pixels sets that floor, so the column cannot shrink into the space the sidebar leaves. A table's own `overflow-x-auto` wrapper never scrolls, because its parent is never narrower than the table | `min-w-0` (`min-width: 0`) on the flex item that holds the content — in a sidebar layout, the inset or `<main>` |
+| The same, but only after the sidebar is closed and reopened | Same cause. A canvas that resized to the wider column on close now holds the column at that width, overflowing by exactly the sidebar's width | Same fix — not a manual `ResizeObserver` on the canvas |
+| One heading style renders in the browser's default serif | A self-referencing custom property such as `--font-sans: var(--font-sans)`. A cycle makes the property invalid at computed-value time, so `font-family` falls back silently — no warning anywhere. Typically left behind when the font loader that was meant to define the variable is removed or never wired | Give the token a real value, or point it at the variable the font loader actually sets |
+| A chart or map ignores the theme switch while the rest of the page follows | Canvas and WebGL libraries draw pixels; they never read CSS custom properties | Keep a per-theme palette in code, mirroring the CSS tokens, and re-apply it through the library's options API whenever the resolved theme changes |
+
+**`overflow-x: hidden` is not a fix for any of these.** It hides the scrollbar while the
+content stays clipped — the cut-off button is still gone, now with no scrollbar to reach it.
+Locking overflow at `body` is fine as a guard against a transient overflow during a width
+transition, but only after the root cause is fixed and only when every legitimately wide
+element scrolls inside its own container.
+
+Verify a layout fix by measuring, not by looking: compare `getBoundingClientRect().width` of
+the column before and after, across several rapid open/close cycles. A screenshot of one
+state proves nothing about the transition between states.
+
 ## When it is not Tailwind
 
 **CSS Modules** — per-file scoping, zero runtime, safe for SSR. Cross-file composition via
@@ -167,7 +186,10 @@ down why.
 - [ ] No class name built from a template literal
 - [ ] Classes merged through `cn()` (clsx + tailwind-merge), not string concatenation
 - [ ] New tokens registered in `@theme`, not only as `:root` custom properties
-- [ ] Dark mode actually exercised, not assumed
+- [ ] Dark mode actually exercised, not assumed — including canvas-rendered components
+- [ ] No custom property defined in terms of itself
+- [ ] Layout with a collapsible sidebar exercised in both states and through the transition,
+      with the widest content the page can show
 - [ ] A production build was run — many Tailwind problems only appear after the production
       scan
 

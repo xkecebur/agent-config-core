@@ -90,6 +90,16 @@ First public release. Extracted from a working single-agent setup and generalise
   there was "nothing here about frontend"; that is no longer true, and the sentence now
   states what is still excluded — mobile, data science — and why there are no
   framework-specific frontend modules
+- Failure modes from two production frontend projects built with these modules, written
+  framework-neutral: `css-styling` gains the flex `min-width: auto` trap behind content cut
+  off beside a sidebar, self-referencing custom properties, and canvas libraries that ignore
+  theme tokens; `frontend-quality` gains locale-consistent formatting and money that never
+  passes through `Number`; `node-backend` gains the `fetch()` timeout that fires during the
+  body stream and exits the process from a microtask; `auth-implementation` gains a
+  backend-for-frontend section; `debugging` gains three anti-patterns about hidden symptoms
+  and unmeasured UI fixes
+- `CONTRIBUTING.md` still declined all frontend modules after the scope was widened; it now
+  declines only framework-specific ones
 
 ### Fixed
 - `scripts/install.sh` was committed with mode `100644`, so the command the README

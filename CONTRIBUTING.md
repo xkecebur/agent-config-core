@@ -29,7 +29,8 @@ Saying this up front so nobody wastes an afternoon:
   because detection is defensive; there is no offensive counterpart here and there will not be.
 - **Generic advice.** "Write clean code", "handle errors properly", "use meaningful names".
   If a module cannot be wrong, it does not earn the context it costs.
-- **Frontend, mobile, or data-science modules.** Out of scope — see the README.
+- **Framework-specific frontend, mobile, or data-science modules.** Out of scope — see the
+  README. Corrections to `css-styling` and `frontend-quality` are welcome.
 - **Edits to `dist/`.** It is generated output. Change `core/modules/` and rebuild.
 - **Reformatting or restructuring** without a functional reason.
 - **New dependencies** for the build. `scripts/render.py` is standard library only, and

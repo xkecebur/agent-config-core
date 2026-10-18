@@ -114,6 +114,9 @@ Before calling it done:
 |---|---|
 | Shotgun debugging — change many things at once | Yields no information, and adds noise to the diff |
 | Fixing the symptom instead of the cause | It returns wearing a different face, usually in production |
+| Hiding the symptom — `overflow: hidden` on clipped content, a catch-all around a crash | The defect is still there with its evidence removed. Clipped content is still clipped, only now unreachable |
+| Verifying a UI fix by one screenshot | Transition and repeat bugs live between states. Measure the property that was wrong (`getBoundingClientRect()`, computed style) before and after, through several cycles |
+| Keeping the first attempt after finding the real cause | An unneeded workaround stays as dead weight that the next reader assumes is load-bearing. Revert it in the same fix |
 | Empty catch or recover to silence an error | Destroys the evidence; the next failure is undiagnosable |
 | Deleting or skipping the failing test | The test is doing its job |
 | Retry as a cure for a logic bug | Hides the cause and doubles the side effects when the operation is not idempotent |
