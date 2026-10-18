@@ -3,7 +3,9 @@
 All notable changes to this project are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.1.0] - Unreleased
+## [Unreleased]
+
+## [0.1.0] - 2026-10-18
 
 First public release. Extracted from a working single-agent setup and generalised.
 
@@ -114,3 +116,6 @@ First public release. Extracted from a working single-agent setup and generalise
 - Within `java-backend`, only the Spring Boot content is daily use. The Quarkus,
   Micronaut, Vert.x, Helidon, and Ktor entries are researched rather than lived, and stay
   limited to detection markers and each framework's known failure modes.
+
+[Unreleased]: https://github.com/xkecebur/agent-config-core/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/xkecebur/agent-config-core/releases/tag/v0.1.0
